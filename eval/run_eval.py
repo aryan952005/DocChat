@@ -13,6 +13,7 @@ import subprocess
 import sys
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -29,15 +30,34 @@ CONFIGS = {
 }
 
 
+class DailyQuotaUsedUp(Exception):
+    pass
+
+
 def with_retry(fn, tries=4):
     """Gemini free tier can answer 429 (rate limit): wait and try again."""
     for attempt in range(1, tries + 1):
         try:
             return fn()
         except Exception as e:  # noqa: BLE001
+            # The daily quota only resets at midnight Pacific time, so waiting a few seconds is pointless
+            if "PerDay" in str(e):
+                raise DailyQuotaUsedUp(str(e)[:150]) from e
             if attempt == tries:
                 raise
             time.sleep(15 * attempt)
+
+
+def with_timeout(fn, seconds):
+    """A network call can hang forever; give up after `seconds` so one question cannot stall the run.
+    A new thread per call, so a stuck call never blocks the next question."""
+    pool = ThreadPoolExecutor(max_workers=1)
+    try:
+        return pool.submit(fn).result(timeout=seconds)
+    except TimeoutError:
+        raise RuntimeError(f"timed out after {seconds}s")
+    finally:
+        pool.shutdown(wait=False)
 
 
 # ---------------------------------------------------------------- worker (one config)
@@ -65,10 +85,10 @@ def worker(name):
         row = {"id": q["id"], "question": q["question"], "in_docs": q["in_docs"]}
         try:
             start = time.time()
-            result = with_retry(lambda: graph.invoke(
+            result = with_timeout(lambda: with_retry(lambda: graph.invoke(
                 {"question": q["question"], "messages": [HumanMessage(content=q["question"])]},
                 config={"configurable": {"thread_id": f"eval-{uuid.uuid4()}"}},  # fresh memory per question
-            ))
+            )), 240)
             row["latency"] = round(time.time() - start, 1)
             row["answer"] = result["answer"]
             row["route"] = result["route"]
@@ -93,17 +113,21 @@ def worker(name):
                         "Does the actual answer state the expected facts without contradicting them? "
                         "Extra correct detail is fine."
                     )
-                    row["correct"] = with_retry(lambda: llm.with_structured_output(Verdict).invoke(prompt)).correct
+                    row["correct"] = with_timeout(lambda: with_retry(lambda: llm.with_structured_output(Verdict).invoke(prompt)), 120).correct
             else:
                 # Out of scope: the right behaviour is an honest "not found"
                 row["correct"] = not_found
+        except DailyQuotaUsedUp:
+            print(f"[{name}] Gemini daily quota is used up; stopping. Run again after it resets.", file=sys.stderr, flush=True)
+            os._exit(2)
         except Exception as e:  # noqa: BLE001
             row["error"] = str(e)[:200]
         rows.append(row)
-        print(f"[{name}] q{q['id']} done", file=sys.stderr, flush=True)
+        print(f"[{name}] q{q['id']} {'ERROR ' + row['error'][:80] if 'error' in row else 'done'}", file=sys.stderr, flush=True)
         time.sleep(2)
 
     (EVAL / f"results_{name}.json").write_text(json.dumps({"name": name, "chunks": chunks, "rows": rows}, indent=2))
+    os._exit(0)  # do not wait for a hung background call
 
 
 # ---------------------------------------------------------------- main (all configs)
@@ -135,7 +159,10 @@ def main(names):
                    MAX_RETRIES=str(cfg["retries"]), QDRANT_COLLECTION=f"docchat_eval_{cfg['chunk']}",
                    MONGO_DB="docchat_eval")
         print(f"\n== {name}: chunk size {cfg['chunk']}, max retries {cfg['retries']}", flush=True)
-        subprocess.run([sys.executable, __file__, "--worker", name], cwd=AI, env=env, check=True, timeout=1800)
+        try:
+            subprocess.run([sys.executable, __file__, "--worker", name], cwd=AI, env=env, check=True, timeout=1800)
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
+            print(f"[{name}] failed: {type(e).__name__}; continuing with the next config", flush=True)
 
     lines = ["| Config | Chunk size | Retries | Chunks stored | Retrieval hit | Answer correct | Out-of-scope correct | Avg latency | Avg retries (in-docs) | Errors |",
              "|---|---|---|---|---|---|---|---|---|---|"]

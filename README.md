@@ -109,7 +109,46 @@ Errors are short JSON messages: 400 bad input, 404 unknown chat, 503 when the AI
 
 ## Evaluation
 
-<!--RESULTS-->
+`eval/run_eval.py` sends 10 questions from `eval/questions.json` through the real agent: 8 that the sample Payments API PDF answers
+(each with its expected page and answer) and 2 that it does not. It compares chunk size 500 vs 1000 and the retry loop ON (`MAX_RETRIES=2`)
+vs OFF (`MAX_RETRIES=0`). Each config runs in its own process with its own Qdrant collection, and every question gets a fresh `thread_id`.
+
+- **Retrieval hit:** the expected page is among the cited sources.
+- **Answer correct:** an LLM judge (Gemini, yes/no structured output) compares the answer with the expected answer.
+- **Out-of-scope correct:** the question ends in "not found" instead of a made-up answer. This tests the query-drift rules.
+- **Latency:** seconds per question, end to end.
+
+| Config | Chunk size | Retries | Chunks stored | Retrieval hit | Answer correct | Out-of-scope correct | Avg latency | Avg retries (in-docs) |
+|---|---|---|---|---|---|---|---|---|
+| c500_retry_on | 500 | 2 | 12 | 8/8 (100%) | 8/8 (100%) | 2/2 (100%) | 15.3s | 0.00 |
+| c1000_retry_on | 1000 | 2 | 6 | 8/8 (100%) | 8/8 (100%) | 2/2 (100%) | 14.1s | 0.00 |
+| c500_retry_off | 500 | 0 | 12 | 8/8 (100%) | 8/8 (100%) | 2/2 (100%) | 11.1s | 0.00 |
+| c1000_retry_off | 1000 | 0 | 6 | 8/8 (100%) | 8/8 (100%) | 2/2 (100%) | 12.8s | 0.00 |
+
+The cost of the retry loop shows on the out-of-scope questions:
+
+| Out-of-scope question | Gemini calls | Latency |
+|---|---|---|
+| Retries ON | 7 (router, 3 rewrites, 3 grades) | 14.5 to 38.4s |
+| Retries OFF | 3 (router, 1 rewrite, 1 grade) | 5.0 to 6.4s (one outlier at 27.0s) |
+
+**What the results say**
+
+- All four configs answered every question correctly and refused both out-of-scope questions, so on this corpus neither setting changes accuracy.
+- The retry loop never ran for answerable questions (0 retries on all 8). It ran only on out-of-scope questions, where it more than doubled the calls and the time.
+- Answerable questions averaged about 12 to 14 seconds in every config. The differences between the averages come from network and free-tier variance (single questions took up to 43 seconds).
+
+**Recommendation:** use chunk size 500 with retries ON. Accuracy was equal, but smaller chunks cite a narrower part of the page, and with
+1000-character chunks the whole document was only 6 chunks, so a top-5 search returned almost all of it (which also makes that result weaker).
+Retries cost nothing when the first search works and are the only way to recover from a vaguely worded question. Switch to `MAX_RETRIES=0`
+only if latency or the free-tier quota matters more: it makes "not found" answers about 3 times faster. (The app currently uses chunk size 800,
+the design default; changing it is one line in `.env` plus a re-ingest.)
+
+**Caveats:** one 6-page document, 10 questions, one run per config, and the same model both answers and judges. The test set had no vaguely
+worded questions, so it could not show the retry loop helping. A next version should add those, similar documents (two APIs that both have
+rate limits) and many more questions.
+
+Run it with `ai-service/.venv/bin/python eval/run_eval.py` (all four configs, about 200 Gemini calls). Raw results are in `eval/results_*.json`.
 
 ## Known limitations
 

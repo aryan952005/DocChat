@@ -1,0 +1,164 @@
+{
+  "name": "c1000_retry_on",
+  "chunks": 6,
+  "rows": [
+    {
+      "id": 1,
+      "question": "What is the rate limit for test keys?",
+      "in_docs": true,
+      "latency": 6.9,
+      "answer": "Test keys (sk_test_) have a lower limit of 20 requests per minute.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [
+        {
+          "filename": "payments-api-sample-v2.pdf",
+          "page": 3
+        }
+      ],
+      "hit": true,
+      "correct": true
+    },
+    {
+      "id": 2,
+      "question": "How long does an old API key keep working after it is rotated?",
+      "in_docs": true,
+      "latency": 7.5,
+      "answer": "An old API key keeps working for 24 hours after it is rotated.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [
+        {
+          "filename": "payments-api-sample-v2.pdf",
+          "page": 2
+        }
+      ],
+      "hit": true,
+      "correct": true
+    },
+    {
+      "id": 3,
+      "question": "Which HTTP status code is returned when the same Idempotency-Key is sent with a different request body?",
+      "in_docs": true,
+      "latency": 7.3,
+      "answer": "409 Conflict is returned when the same Idempotency-Key is sent with a different request body.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [
+        {
+          "filename": "payments-api-sample-v2.pdf",
+          "page": 4
+        }
+      ],
+      "hit": true,
+      "correct": true
+    },
+    {
+      "id": 4,
+      "question": "How many days after capture can a payment still be refunded?",
+      "in_docs": true,
+      "latency": 42.7,
+      "answer": "A payment can be refunded up to 180 days after capture.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [
+        {
+          "filename": "payments-api-sample-v2.pdf",
+          "page": 5
+        }
+      ],
+      "hit": true,
+      "correct": true
+    },
+    {
+      "id": 5,
+      "question": "Which header signs a webhook and how do I verify it?",
+      "in_docs": true,
+      "latency": 6.2,
+      "answer": "Each webhook is signed with the Payments-Signature header. To verify it before trusting the payload, you must compute the HMAC-SHA256 of the raw request body using your webhook secret and then compare it with that header.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [
+        {
+          "filename": "payments-api-sample-v2.pdf",
+          "page": 6
+        }
+      ],
+      "hit": true,
+      "correct": true
+    },
+    {
+      "id": 6,
+      "question": "How many times does the API retry a webhook that does not return 2xx?",
+      "in_docs": true,
+      "latency": 7.5,
+      "answer": "The API retries up to 8 times over 24 hours.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [
+        {
+          "filename": "payments-api-sample-v2.pdf",
+          "page": 6
+        }
+      ],
+      "hit": true,
+      "correct": true
+    },
+    {
+      "id": 7,
+      "question": "What is the minimum payment amount?",
+      "in_docs": true,
+      "latency": 7.6,
+      "answer": "The minimum payment amount is 50 INR (5000 paise).",
+      "route": "docs",
+      "retries": 0,
+      "sources": [
+        {
+          "filename": "payments-api-sample-v2.pdf",
+          "page": 4
+        }
+      ],
+      "hit": true,
+      "correct": true
+    },
+    {
+      "id": 8,
+      "question": "How do I avoid getting blocked by the rate limit?",
+      "in_docs": true,
+      "latency": 22.9,
+      "answer": "To avoid getting blocked by the rate limit, you should use exponential backoff when you receive an HTTP 429 Too Many Requests response. Follow these steps:\n1. Wait 1 second before retrying.\n2. If it happens again, wait 2 seconds.\n3. If it happens again, wait 4 seconds before retrying.\n\nAdditionally, the context mentions that limits are counted per API key and are set to 100 requests per minute for standard keys, or 20 requests per minute for test keys (sk_test_). If you need higher limits, you can request an increase by contacting support if you are on the Enterprise plan.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [
+        {
+          "filename": "payments-api-sample-v2.pdf",
+          "page": 3
+        }
+      ],
+      "hit": true,
+      "correct": true
+    },
+    {
+      "id": 9,
+      "question": "How do I deploy to Kubernetes?",
+      "in_docs": false,
+      "latency": 18.1,
+      "answer": "I couldn't find this in the uploaded documentation. Try rephrasing or upload the relevant doc.",
+      "route": "docs",
+      "retries": 2,
+      "sources": [],
+      "correct": true
+    },
+    {
+      "id": 10,
+      "question": "How much does the Enterprise plan cost?",
+      "in_docs": false,
+      "latency": 14.5,
+      "answer": "I couldn't find this in the uploaded documentation. Try rephrasing or upload the relevant doc.",
+      "route": "docs",
+      "retries": 2,
+      "sources": [],
+      "correct": true
+    }
+  ]
+}

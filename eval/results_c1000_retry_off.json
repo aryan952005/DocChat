@@ -1,0 +1,164 @@
+{
+  "name": "c1000_retry_off",
+  "chunks": 6,
+  "rows": [
+    {
+      "id": 1,
+      "question": "What is the rate limit for test keys?",
+      "in_docs": true,
+      "latency": 5.6,
+      "answer": "Test keys (sk_test_) have a limit of 20 requests per minute.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [
+        {
+          "filename": "payments-api-sample-v2.pdf",
+          "page": 3
+        }
+      ],
+      "hit": true,
+      "correct": true
+    },
+    {
+      "id": 2,
+      "question": "How long does an old API key keep working after it is rotated?",
+      "in_docs": true,
+      "latency": 42.6,
+      "answer": "An old API key keeps working for 24 hours after it is rotated.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [
+        {
+          "filename": "payments-api-sample-v2.pdf",
+          "page": 2
+        }
+      ],
+      "hit": true,
+      "correct": true
+    },
+    {
+      "id": 3,
+      "question": "Which HTTP status code is returned when the same Idempotency-Key is sent with a different request body?",
+      "in_docs": true,
+      "latency": 6.9,
+      "answer": "The HTTP status code 409 Conflict is returned when the same Idempotency-Key is sent with a different request body.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [
+        {
+          "filename": "payments-api-sample-v2.pdf",
+          "page": 4
+        }
+      ],
+      "hit": true,
+      "correct": true
+    },
+    {
+      "id": 4,
+      "question": "How many days after capture can a payment still be refunded?",
+      "in_docs": true,
+      "latency": 6.0,
+      "answer": "A payment can be refunded up to 180 days after capture.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [
+        {
+          "filename": "payments-api-sample-v2.pdf",
+          "page": 5
+        }
+      ],
+      "hit": true,
+      "correct": true
+    },
+    {
+      "id": 5,
+      "question": "Which header signs a webhook and how do I verify it?",
+      "in_docs": true,
+      "latency": 7.4,
+      "answer": "Each webhook is signed with the Payments-Signature header. To verify it before trusting the payload, follow these steps:\n\n1. Compute the HMAC-SHA256 of the raw request body using your webhook secret.\n2. Compare the computed result with the value in the Payments-Signature header.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [
+        {
+          "filename": "payments-api-sample-v2.pdf",
+          "page": 6
+        }
+      ],
+      "hit": true,
+      "correct": true
+    },
+    {
+      "id": 6,
+      "question": "How many times does the API retry a webhook that does not return 2xx?",
+      "in_docs": true,
+      "latency": 10.4,
+      "answer": "The API retries up to 8 times over 24 hours.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [
+        {
+          "filename": "payments-api-sample-v2.pdf",
+          "page": 6
+        }
+      ],
+      "hit": true,
+      "correct": true
+    },
+    {
+      "id": 7,
+      "question": "What is the minimum payment amount?",
+      "in_docs": true,
+      "latency": 7.8,
+      "answer": "The minimum payment amount is 50 INR (5000 paise), because any amount below this triggers a 422 Unprocessable Entity error.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [
+        {
+          "filename": "payments-api-sample-v2.pdf",
+          "page": 4
+        }
+      ],
+      "hit": true,
+      "correct": true
+    },
+    {
+      "id": 8,
+      "question": "How do I avoid getting blocked by the rate limit?",
+      "in_docs": true,
+      "latency": 8.0,
+      "answer": "To avoid getting blocked by rate limits, you should follow these steps:\n1. Stay within the allowed limits, which are 100 requests per minute for standard API keys and 20 requests per minute for test keys (sk_test_).\n2. If you exceed the limit and receive an HTTP 429 Too Many Requests response, check the Retry-After header for the number of seconds to wait.\n3. Use exponential backoff by waiting 1 second, then 2, then 4, before retrying your request.\n4. For batch processing, use the POST /v1/payments/batch endpoint, which counts as a single request and accepts up to 50 payments per call to help reduce your total request count.\n5. If you need higher limits, you can request an increase by contacting support if you are on the Enterprise plan.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [
+        {
+          "filename": "payments-api-sample-v2.pdf",
+          "page": 3
+        }
+      ],
+      "hit": true,
+      "correct": true
+    },
+    {
+      "id": 9,
+      "question": "How do I deploy to Kubernetes?",
+      "in_docs": false,
+      "latency": 27.0,
+      "answer": "I couldn't find this in the uploaded documentation. Try rephrasing or upload the relevant doc.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [],
+      "correct": true
+    },
+    {
+      "id": 10,
+      "question": "How much does the Enterprise plan cost?",
+      "in_docs": false,
+      "latency": 6.4,
+      "answer": "I couldn't find this in the uploaded documentation. Try rephrasing or upload the relevant doc.",
+      "route": "docs",
+      "retries": 0,
+      "sources": [],
+      "correct": true
+    }
+  ]
+}
